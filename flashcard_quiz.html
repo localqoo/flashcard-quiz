@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>閩南語字音字形複習字卡</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif, "Noto Sans TC", sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 300px;
+            margin: 30px 0;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            word-break: break-all;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .flashcard-front {
+            background-color: #4CAF50;
+        }
+        .flashcard-back {
+            background-color: #2196F3;
+            transform: rotateY(180deg);
+            font-size: 2em;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .control-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            background-color: #007BFF;
+            transition: background-color 0.3s;
+        }
+        .control-button:hover {
+            background-color: #0056b3;
+        }
+        .progress {
+            font-size: 1.2em;
+            color: #555;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>閩南語複習字卡</h1>
+    <div class="flashcard-container">
+        <div id="flashcard" class="flashcard">
+            <div id="front" class="flashcard-face flashcard-front"></div>
+            <div id="back" class="flashcard-face flashcard-back"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <button id="prev-btn" class="control-button">上一張</button>
+        <div id="progress" class="progress"></div>
+        <button id="next-btn" class="control-button">下一張</button>
+    </div>
+</div>
+
+<script>
+    // 從上傳文件中提取的數據
+    const quizData = [
+        {"hanzi": "自由", "tailo": "tsū-iû"},
+        {"hanzi": "炭礦", "tailo": "thuànn-khòng"},
+        {"hanzi": "鐵牛仔", "tailo": "thih-gû-á"},
+        {"hanzi": "夜色", "tailo": "iā-sik"},
+        {"hanzi": "失常", "tailo": "sit-siông"},
+        {"hanzi": "鹽埕", "tailo": "Iâm/iâm-tiânn"},
+        {"hanzi": "赦免", "tailo": "sià-bián"},
+        {"hanzi": "目睭仁", "tailo": "ba̍k-tsiu-jîn"},
+        {"hanzi": "小數", "tailo": "sió-sòo"},
+        {"hanzi": "暗光鳥", "tailo": "àm-kong-tsiáu"},
+        {"hanzi": "跤盤", "tailo": "kha-puânn"},
+        {"hanzi": "大龍泵", "tailo": "Tuālông-pōng"},
+        {"hanzi": "外債", "tailo": "guā-tsè"},
+        {"hanzi": "倒覆", "tailo": "tò-phak"},
+        {"hanzi": "充公", "tailo": "tshiong-kong"},
+        {"hanzi": "硩枝", "tailo": "tehki"},
+        {"hanzi": "看病", "tailo": "pēnn/pīnn"},
+        {"hanzi": "火鼠", "tailo": "hué-tshí/tshú"},
+        {"hanzi": "添福壽", "tailo": "thiam-hok-siū"},
+        {"hanzi": "工人", "tailo": "kang-lâng"},
+        {"hanzi": "畫尪仔", "tailo": "uē-ang-á"},
+        {"hanzi": "後者", "tailo": "hiō-tsiá"},
+        {"hanzi": "決定", "tailo": "kuat-tīng"},
+        {"hanzi": "本是", "tailo": "pún-sū"},
+        {"hanzi": "八珍", "tailo": "pat-tin"},
+        {"hanzi": "做官", "tailo": "tsò-kuann"},
+        {"hanzi": "對半", "tailo": "tuì-huānn"},
+        {"hanzi": "執行", "tailo": "tsip-hîng"},
+        {"hanzi": "鼻空風", "tailo": "phīnn-khang-hong"},
+        {"hanzi": "放牧", "tailo": "pàng-bo̍k"},
+        {"hanzi": "輪班", "tailo": "lûn-pan"},
+        {"hanzi": "麥寮鄉", "tailo": "Be̍h-liâu-hiong"},
+        {"hanzi": "體格", "tailo": "thé-keh"},
+        {"hanzi": "暗號", "tailo": "àm-hō"},
+        {"hanzi": "師範的", "tailo": "su-huān-ê"},
+        {"hanzi": "客人", "tailo": "kheh-lâng"},
+        {"hanzi": "增資", "tailo": "tsing-tsu"},
+        {"hanzi": "規範", "tailo": "kui-huān"},
+        {"hanzi": "電子", "tailo": "tiān-tsú"},
+        {"hanzi": "紅粉", "tailo": "âng-hún"},
+        {"hanzi": "黍仔", "tailo": "sé/sué-á"},
+        {"hanzi": "出張", "tailo": "tshut-tiunn"},
+        {"hanzi": "膨皮", "tailo": "phòng-phuê"},
+        {"hanzi": "競賽", "tailo": "kīng-sài"},
+        {"hanzi": "當前", "tailo": "tong-tsiân"},
+        {"hanzi": "主演", "tailo": "tsú-ián"},
+        {"hanzi": "落下", "tailo": "lo̍h-hā"},
+        {"hanzi": "剪綹", "tailo": "tsián-liú"},
+        {"hanzi": "主管", "tailo": "tsú-kuán"},
+        {"hanzi": "牛種仔", "tailo": "gû-tsíng-á"},
+        {"hanzi": "龍脈", "tailo": "liông-me̍h"},
+        {"hanzi": "竹頭崎", "tailo": "Tik-thâu-kiā"},
+        {"hanzi": "音樂聲", "tailo": "im-ga̍k-siann"},
+        {"hanzi": "退童", "tailo": "thè-tâng"},
+        {"hanzi": "翻點", "tailo": "huan-tiám"},
+        {"hanzi": "嘉義", "tailo": "Ka-gī"},
+        {"hanzi": "慶安宮", "tailo": "Khìng-hok-kiong"},
+        {"hanzi": "人為", "tailo": "jîn/lîn-uî"},
+        {"hanzi": "五逆", "tailo": "ngóo-gi̍k"},
+        {"hanzi": "敗露", "tailo": "pāi-lōo"},
+        {"hanzi": "鎮靜", "tailo": "tìn-tsīng"},
+        {"hanzi": "查封", "tailo": "tshâ-hong"},
+        {"hanzi": "黏黐黐", "tailo": "liâm-thi-thi"},
+        {"hanzi": "缺憾", "tailo": "khuat-hām"},
+        {"hanzi": "五仁", "tailo": "ngóo-jîn/lîn"},
+        {"hanzi": "辦公", "tailo": "pān-kong"},
+        {"hanzi": "土公仔", "tailo": "thóo-kong-á"},
+        {"hanzi": "小等", "tailo": "sió-tán"},
+        {"hanzi": "閘車", "tailo": "tsa̍h-tshia"},
+        {"hanzi": "呼觱仔", "tailo": "khoo-pi-á"},
+        {"hanzi": "妖怪", "tailo": "iau-kuài"},
+        {"hanzi": "退稅", "tailo": "thè-suè"},
+        {"hanzi": "假日", "tailo": "ká-ji̍t/li̍t"},
+        {"hanzi": "拜訪", "tailo": "pài-hóng"},
+        {"hanzi": "宜蘭縣", "tailo": "Gî-lân-kuān"},
+        {"hanzi": "接管", "tailo": "tsiap-kuán"},
+        {"hanzi": "同心", "tailo": "tông-sim"},
+        {"hanzi": "即時", "tailo": "ki̍p-sî"},
+        {"hanzi": "獨身", "tailo": "to̍k-sin"},
+        {"hanzi": "成品", "tailo": "sîng-phín"},
+        {"hanzi": "連帶", "tailo": "liân-tài"},
+        {"hanzi": "擴展", "tailo": "khok-tián"},
+        {"hanzi": "表面", "tailo": "piáu-bīn"},
+        {"hanzi": "相見", "tailo": "sio/sian-kiàn"},
+        {"hanzi": "國籍", "tailo": "kok-tsi̍k"},
+        {"hanzi": "筋絡", "tailo": "kin/kun-le"},
+        {"hanzi": "無心", "tailo": "bô-sim"},
+        {"hanzi": "林內", "tailo": "Nâ-lāi"},
+        {"hanzi": "北區", "tailo": "pak-khu"},
+        {"hanzi": "桌屜", "tailo": "toh-thuah"},
+        {"hanzi": "官話", "tailo": "kuann-uē"},
+        {"hanzi": "厝頂", "tailo": "tshù-tíng"},
+        {"hanzi": "鳥松鄉", "tailo": "Tsiáu-tshîng-hiong"},
+        {"hanzi": "灌腸", "tailo": "kuàn-tn̂g/tshiâng"},
+        {"hanzi": "休閒", "tailo": "hiu-hân"},
+        {"hanzi": "芭壟尾", "tailo": "Pa-lóng-ué"},
+        {"hanzi": "認罪", "tailo": "jīn/līn-tsuē"},
+        {"hanzi": "陳雷公", "tailo": "tân-luî-kong"},
+        {"hanzi": "床母", "tailo": "tshn̂g-bó"},
+        {"hanzi": "源自", "tailo": "guân-tsū"},
+        {"hanzi": "舊公", "tailo": "kū-kong"},
+        {"hanzi": "虧欠", "tailo": "khui-khiàm"},
+        {"hanzi": "平仄", "tailo": "piânn-tseh"},
+        {"hanzi": "小暑", "tailo": "sú-sú"},
+        {"hanzi": "雞籠", "tailo": "Ke/Kue-lâng"},
+        {"hanzi": "校工", "tailo": "hāu-kang"},
+        {"hanzi": "瘸手", "tailo": "khuê/khê-tshiú"},
+        {"hanzi": "後龍溪", "tailo": "Āu-lâng-khe"},
+        {"hanzi": "內山", "tailo": "lāi-suann"},
+        {"hanzi": "膽頭", "tailo": "tánn-thâu"},
+        {"hanzi": "提高", "tailo": "thê-ko"},
+        {"hanzi": "配給", "tailo": "phuè-kip"},
+        {"hanzi": "隔日", "tailo": "keh-ji̍t"},
+        {"hanzi": "農曆", "tailo": "lông-bîn-li̍k"},
+        {"hanzi": "會場", "tailo": "huē-tiûnn"},
+        {"hanzi": "大久", "tailo": "tuā-kū"},
+        {"hanzi": "災害", "tailo": "tsai-hāi"},
+        {"hanzi": "藥酒", "tailo": "io̍h-tsiú"},
+        {"hanzi": "體能", "tailo": "thé-lîng"},
+        {"hanzi": "毋那", "tailo": "m̄-nā"},
+        {"hanzi": "血蚶", "tailo": "hueh/huih-ham"},
+        {"hanzi": "罩衫", "tailo": "tà-sann"},
+        {"hanzi": "勸和", "tailo": "khǹg-hô"},
+        {"hanzi": "停損", "tailo": "thîng-sún"},
+        {"hanzi": "殕殕", "tailo": "phú-phú"},
+        {"hanzi": "追求", "tailo": "tui-kiû"},
+        {"hanzi": "斷根", "tailo": "tn̄g-kin"},
+        {"hanzi": "這世人", "tailo": "tsit-sì-lâng"},
+        {"hanzi": "勤務", "tailo": "khîn-bū"},
+        {"hanzi": "虼蚻", "tailo": "ka-tsua̍h"},
+        {"hanzi": "長衫", "tailo": "tn̂g-sann"},
+        {"hanzi": "胭脂", "tailo": "ian-tsi"},
+        {"hanzi": "列出", "tailo": "lia̍t-tshut"},
+        {"hanzi": "運命", "tailo": "miāūn"},
+        {"hanzi": "講述", "tailo": "káng-su̍t"},
+        {"hanzi": "危險", "tailo": "guî-hiám"},
+        {"hanzi": "拍字機", "tailo": "phah-jī-ki"},
+        {"hanzi": "接骨", "tailo": "tsiap-kut"},
+        {"hanzi": "東勢角", "tailo": "Tang-sì-kak"},
+        {"hanzi": "進度", "tailo": "tsìn-tōo"},
+        {"hanzi": "柔道", "tailo": "jiû-tō"},
+        {"hanzi": "安插", "tailo": "an-tshah"},
+        {"hanzi": "隔開", "tailo": "keh-khui"},
+        {"hanzi": "股長", "tailo": "kóo-tiúnn"},
+        {"hanzi": "立場", "tailo": "tiûnn"},
+        {"hanzi": "討論", "tailo": "thó-lūn"},
+        {"hanzi": "斷電", "tailo": "tn̄g-tiān"},
+        {"hanzi": "看日", "tailo": "khuànn"},
+        {"hanzi": "扳過來", "tailo": "pian--kuè-lâi"},
+        {"hanzi": "海內外", "tailo": "hái-lāi-guā"},
+        {"hanzi": "復工", "tailo": "ho̍k-kang"},
+        {"hanzi": "鋪路", "tailo": "phoo-lōo"},
+        {"hanzi": "放棄", "tailo": "hòng-khì"},
+        {"hanzi": "挵破", "tailo": "lòng-phuà"},
+        {"hanzi": "瑞和", "tailo": "suī-hô"},
+        {"hanzi": "費神", "tailo": "huì-sîn"},
+        {"hanzi": "住址", "tailo": "tsū-tsí"},
+        {"hanzi": "目睭毛", "tailo": "ba̍k-tsiu-jîn"},
+        {"hanzi": "敬重", "tailo": "kìng-tiōng"},
+        {"hanzi": "見笑", "tailo": "kiàn-siàu"},
+        {"hanzi": "種子", "tailo": "tsíng-tsí"},
+        {"hanzi": "瞪力", "tailo": "tènn/tìnn-la̍t"},
+        {"hanzi": "福利", "tailo": "ho̍k-lī"},
+        {"hanzi": "代言人", "tailo": "tāi-giân-jîn"},
+        {"hanzi": "制服", "tailo": "tsè-ho̍k"},
+        {"hanzi": "倒踏", "tailo": "tò-ta̍h"},
+        {"hanzi": "六塊厝", "tailo": "La̍k-tè-tshù"},
+        {"hanzi": "保送", "tailo": "pó-sàng"},
+        {"hanzi": "贊成", "tailo": "tsàn-sîng"},
+        {"hanzi": "棕櫚仔", "tailo": "tsang-lù-á"},
+        {"hanzi": "負債", "tailo": "hū-tsè"},
+        {"hanzi": "牛陵", "tailo": "gû-niā"},
+        {"hanzi": "客嫁妝", "tailo": "hak-kè-tsng"},
+        {"hanzi": "改革", "tailo": "kái-kik"},
+        {"hanzi": "表", "tailo": "piáu"},
+        {"hanzi": "樣式", "tailo": "iūnn-sik"},
+        {"hanzi": "寒衫", "tailo": "kuânn-sann"},
+        {"hanzi": "上櫃", "tailo": "siōng-kuī"},
+        {"hanzi": "擴建", "tailo": "khok-kiàn"},
+        {"hanzi": "人生", "tailo": "jîn/lîn-sing"},
+        {"hanzi": "戶口名", "tailo": "hōo-kháu-miâ"},
+        {"hanzi": "氣氛", "tailo": "khì-hun"},
+        {"hanzi": "軍艦", "tailo": "kun-lām"},
+        {"hanzi": "外傷", "tailo": "guā-siong"},
+        {"hanzi": "無去", "tailo": "bô-khì"},
+        {"hanzi": "強強", "tailo": "kiōng"},
+        {"hanzi": "聯手", "tailo": "liân-tshiú"},
+        {"hanzi": "手橐仔", "tailo": "tshiú-lok-á"},
+        {"hanzi": "手模", "tailo": "tshiú-bôo"},
+        {"hanzi": "主治", "tailo": "tsú-tī"},
+        {"hanzi": "交割", "tailo": "kau-kuah"},
+        {"hanzi": "測驗", "tailo": "tshik-giām"},
+        {"hanzi": "走傱", "tailo": "tsáu-tsông"},
+        {"hanzi": "新奇", "tailo": "sin-kî"},
+        {"hanzi": "光復溪", "tailo": "Kong-ho̍k-khe"},
+        {"hanzi": "隨身", "tailo": "suî-sin"},
+        {"hanzi": "頂月", "tailo": "tíng-gue̍h"},
+        {"hanzi": "破產", "tailo": "phò-sán"},
+        {"hanzi": "鶯歌鎮", "tailo": "Ing-ko-tìn"},
+        {"hanzi": "輕可", "tailo": "khin-khó"},
+        {"hanzi": "天庭", "tailo": "thian-tîng"},
+        {"hanzi": "後壁厝", "tailo": "Āu-piah-tshù"},
+        {"hanzi": "擋喙", "tailo": "tàng-tshuì"},
+        {"hanzi": "八家將", "tailo": "Pat-ka-tsiòng"},
+        {"hanzi": "本金", "tailo": "pún-kim"},
+        {"hanzi": "抹壁", "tailo": "buah-piah"},
+        {"hanzi": "語", "tailo": "gí/gú"},
+        {"hanzi": "保養廠", "tailo": "pó-ióng-tiûnn"},
+        {"hanzi": "著頭", "tailo": "tio̍h-thâu"},
+        {"hanzi": "湠開", "tailo": "thuànn-khui"},
+        {"hanzi": "觳仔", "tailo": "khok-á"},
+        {"hanzi": "雞翼", "tailo": "ke-si̍t"},
+        {"hanzi": "特定", "tailo": "ti̍k-tīng"},
+        {"hanzi": "運量", "tailo": "ūn-liōng"},
+        {"hanzi": "好死", "tailo": "sí-hó"},
+        {"hanzi": "無較縒", "tailo": "bô-khah-tsua̍h"},
+        {"hanzi": "掠交替", "tailo": "lia̍h-kau-thè/thuè"},
+        {"hanzi": "江子翠", "tailo": "Káng-tsú-tshuì"},
+        {"hanzi": "祖公", "tailo": "tsóo-kong"},
+        {"hanzi": "下擺", "tailo": "ē-pái"},
+        {"hanzi": "低音", "tailo": "kē-im"},
+        {"hanzi": "褪殼", "tailo": "thǹg-khak"},
+        {"hanzi": "桃仔園", "tailo": "Thô-á-hn̂g"},
+        {"hanzi": "無妨", "tailo": "bû-hông"},
+        {"hanzi": "重心", "tailo": "tiōng-sim"},
+        {"hanzi": "鐵櫃", "tailo": "thih-kuī"},
+        {"hanzi": "召集", "tailo": "tiàu-tsi̍p"},
+        {"hanzi": "踅輾轉", "tailo": "se̍h-liàn-tńg"},
+        {"hanzi": "烏煙", "tailo": "oo-ian"},
+        {"hanzi": "頕頭", "tailo": "tàm-thâu"},
+        {"hanzi": "慢慢仔", "tailo": "bān-bān-á"},
+        {"hanzi": "慈濟宮", "tailo": "Tsû-tsè-kiong"},
+        {"hanzi": "笠仔", "tailo": "le̍h-á"},
+        {"hanzi": "尻脊後", "tailo": "kha-tshng-āu"},
+        {"hanzi": "剪布", "tailo": "tsián-pòo"},
+        {"hanzi": "動搖", "tailo": "tōng-iâu"},
+        {"hanzi": "起無空", "tailo": "khí-bô-khang"},
+        {"hanzi": "關愛", "tailo": "kuan-ài"},
+        {"hanzi": "便菜", "tailo": "piān-tshài"},
+        {"hanzi": "做工", "tailo": "tsò/tsuè-kang"},
+        {"hanzi": "行天宮", "tailo": "Hîng-thian-kiong"},
+        {"hanzi": "活性", "tailo": "ua̍h-sìng"},
+        {"hanzi": "企頂", "tailo": "kiā-tíng"},
+        {"hanzi": "郵政", "tailo": "iû-tsìng"},
+        {"hanzi": "張持", "tailo": "tng-tán"},
+        {"hanzi": "正當時", "tailo": "tsiànn-tong-sî"},
+        {"hanzi": "紙條", "tailo": "tsuá-tiâu"},
+        {"hanzi": "坪田鎮", "tailo": "Pîng-tshân-tìn"},
+        {"hanzi": "死人款", "tailo": "sí-lâng-khuán"},
+        {"hanzi": "作田人", "tailo": "tsoh-tshân-lâng"},
+        {"hanzi": "親事", "tailo": "tshin-sū"},
+        {"hanzi": "大慶", "tailo": "tāi-khìng"},
+        {"hanzi": "外用", "tailo": "guā-iōng/īng"},
+        {"hanzi": "同門", "tailo": "tâng-mn̂g"},
+        {"hanzi": "看無起", "tailo": "khuànn-bô-khí"},
+        {"hanzi": "財神爺", "tailo": "Tsâi-sîn-iâ"},
+        {"hanzi": "成份", "tailo": "sîng-hūn"},
+        {"hanzi": "失蹤", "tailo": "sit-tsong"},
+        {"hanzi": "對焦", "tailo": "tuì-tsiau"},
+        {"hanzi": "猴齊天", "tailo": "Kâu-Tsê-thian"},
+        {"hanzi": "硫磺", "tailo": "liû-hông"},
+        {"hanzi": "射箭", "tailo": "siā-tsìnn"},
+        {"hanzi": "失效", "tailo": "sit-hāu"},
+        {"hanzi": "臺東縣", "tailo": "Tâi-tang-kuān"},
+        {"hanzi": "發角", "tailo": "huat-kak"},
+        {"hanzi": "傳輸", "tailo": "thuân-su"},
+        {"hanzi": "生相", "tailo": "senn-siùnn"},
+        {"hanzi": "透早", "tailo": "thàu-tsá"},
+        {"hanzi": "圍堵", "tailo": "uî-tóo"},
+        {"hanzi": "蜜婆", "tailo": "bi̍t-pô"},
+        {"hanzi": "補選", "tailo": "póo-suán"},
+        {"hanzi": "刺字", "tailo": "tshiah-jī"},
+        {"hanzi": "燒", "tailo": "sio"},
+        {"hanzi": "無了時", "tailo": "bô-liáu-sî"},
+        {"hanzi": "浮現", "tailo": "phû-hiān"},
+        {"hanzi": "後火", "tailo": "hiō-hué"},
+        {"hanzi": "短銃", "tailo": "té-tshìng"},
+        {"hanzi": "鼻目喙", "tailo": "phīnn-ba̍k-tshuì"},
+        {"hanzi": "寶山鄉", "tailo": "Pó-san-hiong"},
+        {"hanzi": "臭油", "tailo": "tshàu-iû"},
+        {"hanzi": "往往", "tailo": "íng-íng"},
+        {"hanzi": "青草", "tailo": "tshenn-tsháu"},
+        {"hanzi": "風評", "tailo": "hong-phîng"},
+        {"hanzi": "出", "tailo": "tshut"},
+        {"hanzi": "請人客", "tailo": "tshiánn-lâng-kheh"},
+        {"hanzi": "雙爿", "tailo": "siang-pîng"},
+        {"hanzi": "木柵", "tailo": "ba̍k-sa"},
+        {"hanzi": "承攬", "tailo": "sîng-iám"},
+        {"hanzi": "能耐", "tailo": "lîng-nāi"},
+        {"hanzi": "報告", "tailo": "pò-kò"},
+        {"hanzi": "粉筆", "tailo": "hún-pit"},
+        {"hanzi": "王后", "tailo": "ông-hiō"},
+        {"hanzi": "近倚", "tailo": "kīn/kūn-uá"},
+        {"hanzi": "冇數", "tailo": "phànn-siàu"},
+        {"hanzi": "藍圖", "tailo": "nâ-tôo"},
+        {"hanzi": "基督教", "tailo": "Ki-tok-kàu"},
+        {"hanzi": "礙虐", "tailo": "gāi-gio̍h"},
+        {"hanzi": "產量", "tailo": "sán-liōng"},
+        {"hanzi": "放裒", "tailo": "pàng-pôo"},
+        {"hanzi": "集集鎮", "tailo": "Tsi̍p-tsi̍p-tìn"},
+        {"hanzi": "備註", "tailo": "pī-tsù"},
+        {"hanzi": "電力", "tailo": "tiān-li̍k"},
+        {"hanzi": "怪物", "tailo": "kuài-bu̍t"},
+        {"hanzi": "受困", "tailo": "siū-khùn"},
+        {"hanzi": "緊手", "tailo": "kín-tshiú"},
+        {"hanzi": "臭火燒", "tailo": "tshàu-phuì-sian"},
+        {"hanzi": "小將", "tailo": "siáu-tsiòng"},
+        {"hanzi": "淑女", "tailo": "siok-lí/lú"},
+        {"hanzi": "心機", "tailo": "sim-ki"},
+        {"hanzi": "佳里鎮", "tailo": "Ka-lí-tìn"},
+        {"hanzi": "何米斗", "tailo": "hô-mí-khóo"},
+        {"hanzi": "中區", "tailo": "tiong-khu"},
+        {"hanzi": "戲園", "tailo": "hì-hn̂g"},
+        {"hanzi": "同窗", "tailo": "tông-tshong"},
+        {"hanzi": "明顯", "tailo": "bîng-hián"},
+        {"hanzi": "受騙", "tailo": "siū-phiàn"},
+        {"hanzi": "登記", "tailo": "ting-kì"},
+        {"hanzi": "相信", "tailo": "siong-sìn"},
+        {"hanzi": "匯出", "tailo": "huē-tshut"},
+        {"hanzi": "講習", "tailo": "káng-si̍p"},
+        {"hanzi": "啟明", "tailo": "khé-bîng"},
+        {"hanzi": "糜飯", "tailo": "muê/bê-pn̄g"},
+        {"hanzi": "原底", "tailo": "guân-té/tué"},
+        {"hanzi": "一貫", "tailo": "it-kuàn"},
+        {"hanzi": "到位", "tailo": "kàu-uī"},
+        {"hanzi": "鯊魚", "tailo": "sua-hî"},
+        {"hanzi": "圍巾", "tailo": "uî-kin/kun"},
+        {"hanzi": "鋪排話", "tailo": "phoo-pâi-uē"},
+        {"hanzi": "五股坑", "tailo": "Gōo-kóo-khenn"},
+        {"hanzi": "決標", "tailo": "kuat-pio"},
+        {"hanzi": "偶像", "tailo": "ngóo-siōng"},
+        {"hanzi": "壁堵", "tailo": "piah-tóo"},
+        {"hanzi": "銀器", "tailo": "gîn/gûn-khì"},
+        {"hanzi": "一寡仔", "tailo": "tsi̍t-kuá-á"},
+        {"hanzi": "任期", "tailo": "jīm-kî"},
+        {"hanzi": "散仙", "tailo": "suànn-sian"},
+        {"hanzi": "到站", "tailo": "kàu-tsām"},
+        {"hanzi": "舂臼", "tailo": "tsing-khū"},
+        {"hanzi": "臺胞", "tailo": "Tâi-pau"},
+        {"hanzi": "烏白來", "tailo": "oo-pe̍h-lâi"},
+        {"hanzi": "能量", "tailo": "lîng-liōng"},
+        {"hanzi": "階級", "tailo": "kai-kip"},
+        {"hanzi": "維護", "tailo": "uî-hōo"},
+        {"hanzi": "尾仔囝", "tailo": "bué/bé-á-kiánn"},
+        {"hanzi": "免不了", "tailo": "bián-put-liáu"},
+        {"hanzi": "忌日", "tailo": "kī/khī-ji̍t/li̍t"},
+        {"hanzi": "耳孔", "tailo": "hīnn/hī-khang"},
+        {"hanzi": "絕路", "tailo": "tsua̍t-lōo"},
+        {"hanzi": "碼頭", "tailo": "bé-bé"},
+        {"hanzi": "合計", "tailo": "ha̍p-kè"},
+        {"hanzi": "頂擺", "tailo": "tíng-pái"},
+        {"hanzi": "轉折", "tailo": "tsuán-tsiat"},
+        {"hanzi": "反正", "tailo": "huán-tsìng"},
+        {"hanzi": "興化廍", "tailo": "Hing-huà-phōo"},
+        {"hanzi": "廳頭", "tailo": "thiann-thâu"},
+        {"hanzi": "跪拜", "tailo": "kuī-pài"}
+    ];
+
+    let currentCardIndex = 0;
+    const flashcard = document.getElementById('flashcard');
+    const frontFace = document.getElementById('front');
+    const backFace = document.getElementById('back');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const progressText = document.getElementById('progress');
+
+    function updateCard() {
+        if (currentCardIndex >= 0 && currentCardIndex < quizData.length) {
+            const cardData = quizData[currentCardIndex];
+            frontFace.textContent = cardData.hanzi;
+            backFace.textContent = cardData.tailo;
+            progressText.textContent = `${currentCardIndex + 1} / ${quizData.length}`;
+            flashcard.classList.remove('flipped');
+        }
+    }
+
+    flashcard.addEventListener('click', () => {
+        flashcard.classList.toggle('flipped');
+    });
+
+    nextBtn.addEventListener('click', () => {
+        currentCardIndex = (currentCardIndex + 1) % quizData.length;
+        updateCard();
+    });
+
+    prevBtn.addEventListener('click', () => {
+        currentCardIndex = (currentCardIndex - 1 + quizData.length) % quizData.length;
+        updateCard();
+    });
+
+    // Initial load
+    updateCard();
+</script>
+
+</body>
+</html>
